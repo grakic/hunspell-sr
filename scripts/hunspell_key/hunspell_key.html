@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Hunspell KEY string visualization tool</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <style type="text/css">
+    th { text-align: left; }
+    td { vertical-align: top; }
+    pre { padding-left: 15px; letter-spacing: 2px; }
+    body { width: 800px; margin: auto; }
+    textarea { width: 100%; }
+    #visualization { width: 100%; text-align: center; }
+    div.key { display: inline-block; width: 30px; height: 20px; border: 1px solid #ccc; text-align: center; padding: 3px; margin: 1px; cursor: pointer; }
+    div.line { clear: left; text-align: center; margin: auto;}
+    div.dead { background: #ccc; cursor: default; }
+    div.enter { width: 60px; }
+    div.shift { width: 50px; }
+    div.wide { width: 35px; }
+    input.example_button { font-size: x-small; padding: 0px; margin-top: 5px; border: 1px solid #ccc; color: #888; background: #f3f3f3; }
+  </style>
+  <style type="text/css" id="hover_style_placeholder"></style>
+  <script type="text/javascript">
+
+    layout_examples = ['qwertyuiop___+\nasdfghjkl__E\nzxcvbnm___S', 'љњертжуиопшђж+\nасдфгхјклчћE\nзџцвбнм___S', 'qwertyuiopšđž+\nasdfghjklčćE\nzxcvbnm___S'];
+    key_examples = ['qwertyuiop\nzxcvbnm\nqaw|saz|wse|dsx\nsz|edr|fdc|dx\nrft|gfv|fc|tgy\nhgb|gv|yhu|jhn|hb\nuji|kjm|jn|iko|lkm|olp', 'љњертжуиопшђж\nасдфгхјклчћ\nзџцвбнм\nжшђ\nћшч\nжчђ\nђћж\nзж\nљањседрфтгжхуј\nјиколпч\nазсџдцфвгбх\nхнјмк', 'qwertyuiopšđž\nasdfghjklčć\nzxcvbnm\nžšđ\nćšč\nžčđ\nđćž\nzy\nqawsedrftgyhuj\njikolpč\nazsxdcfvgbh\nhnjmk'];
+
+    function show_example(array,node_id,i) {
+      node = document.getElementById(node_id);
+      if(node && array && i>=0 && i<array.length) node.innerHTML = array[i];
+    }
+
+    function use_example(textarea_id, node_id) {
+      textarea = document.getElementById(textarea_id);
+      node = document.getElementById(node_id);
+      if(textarea && node) textarea.value = node.innerHTML;
+      textarea.onchange();
+    }
+
+    function hover_key(key_node) {
+      s = document.getElementById('hover_style_placeholder');
+      s.innerHTML = '';
+      if(key_node) { 
+        key_name = key_node.getAttribute('name');
+        s.innerHTML += '.'+key_name+' { background: red; }';
+        for(opacity=90;opacity>0;opacity-=10) {
+          s.innerHTML += '.'+key_name+opacity+' { background: red; opacity: '+opacity/100+'; }';
+        }
+      }
+    }
+
+    function get_keys_by_name(key_name) {
+      vdiv = document.getElementById('visualization');
+      keys = []; nodes = vdiv.getElementsByTagName('div');
+      for (i=0;i<nodes.length;i++) {
+        if( nodes[i].getAttribute('name') == key_name ) keys.push(nodes[i]);
+      }
+      return keys;
+    }
+
+    original_html = null;
+    function show() {
+ 
+      vdiv = document.getElementById('visualization');
+      lval = document.getElementById('layout').value;
+      kval = document.getElementById('key').value;
+
+      if(!original_html) original_html = vdiv.innerHTML;
+      html = '';
+      keys = [];
+
+      for each ( line in lval.split('\n') ) {
+        html += '<div class="line">'
+        for(i=0;i<line.length;i++) {
+          key = line[i]; class = 'key'; id = ''; js = ''; name = '';
+
+          // special: E = enter; S = shift; .+ = Wide key; _ or space = Dead;
+          if(key == 'E') { class += ' enter'; key = '_'; }
+          else if(key == 'S') { class += ' shift'; key = '_'; }
+          else if(i+1 < line.length && line[i+1] == '+') { class += ' wide'; i++; }
+
+          if(key == ' ' || key == '_') { key = '&nbsp;'; class += ' dead'; }
+          else { name = 'name="key_' + key + '"'; js = 'onmouseover="hover_key(this)" onmouseout="hover_key(null)" '; class += ' key_'+key; keys.push(key); }
+
+          html += '<div '+js+'class="'+ class + '" ' + name + '>' + key + '</div>';
+        }
+        html += '</div>';
+      }
+
+      if(keys.length > 0) vdiv.innerHTML = html;
+      else vdiv.innerHTML = original_html;
+
+      for each ( key in keys ) {        
+        opacity = 90;
+        for each ( group in kval.split(/\n|\|/) ) {
+          j = 0;
+          while((j = group.indexOf(key, j)) != -1) {
+            if(j > 0) {
+              for each ( left_key in get_keys_by_name('key_' + group[j-1]) ) {
+                if(opacity>10) opacity -= 10;
+                left_key.className += ' key_' + key + opacity;
+              }
+            }
+            if(j+1 < group.length) {
+              for each ( right_key in get_keys_by_name('key_' + group[j+1]) ) {
+                if(opacity>10) opacity -= 10;
+                right_key.className += ' key_' + key + opacity;
+              }
+            }
+            j++;
+          }
+        }
+      }
+  
+    }
+
+  </script>
+</head>
+<body>
+
+<!-- header -->
+<h1><a href="http://hunspell.sourceforge.net/">Hunspell</a> KEY string visualization tool</h1>
+<p>Hunspell searches and suggests words with one different character replaced by a neighbor KEY
+character. Not neighbor characters in  KEY string are separated by vertical line characters.</p>
+<p>Enter your keyboard layout and KEY string value (or use one of the examples) and hover over
+the key on the visualized keyboard to see neighbor keys in red where opacity shows top nine neighbor
+keys in left-to-right KEY string priority.</p>
+<br/>
+
+<!-- visualization -->
+<div style="min-height: 100px" id="visualization">
+<h3 style="color: #ccc"> &lt; Keyboard layout will be visualized here &gt; </h3>
+</div>
+<p>&nbsp;</p>
+
+<!-- form -->
+<table><tr>
+  <th colspan="2">Enter keyboard <acronym title="Special values: Use E for Enter key, S for Shift key, + to make previous key wide, _ or space for a dead key. See examples for usage info."> 
+layout</acronym></th>
+  <th colspan="2">Enter KEY string value</th>
+</tr><tr>
+
+  <td width="140px">
+     <textarea rows="6" cols="15" id="layout" onchange="show()"></textarea>
+     <br/><br/>
+     <input type="button" onclick="show()" value="Visualize" style="padding: 2px; width:100%"/>
+
+  </td>
+  <td width="210px" style="font-size: small; color: #ccc; padding-left: 15px;">
+    <em>example:</em><br/>
+        <input class="example_button" type="button" onclick="javascript:show_example(layout_examples, 'layout_example', 0)" value="en-dv-qy" /> 
+        <input class="example_button" type="button" onclick="javascript:show_example(layout_examples, 'layout_example', 1)" value="sr-cyrl" /> 
+        <input class="example_button" type="button" onclick="javascript:show_example(layout_examples, 'layout_example', 2)" value="sr-latn" /> 
+    <pre id="layout_example"></pre>
+    <script type="text/javascript">show_example(layout_examples, 'layout_example', 0);</script>
+    <a style="color: #ccc" href="#" onclick="use_example('layout', 'layout_example'); return false;">use example</a>
+  </td>
+
+  <td width="180px"><textarea rows="11" cols="20" id="key" onchange="show()"></textarea></td>
+  <td width="220px" style="font-size: small; color: #ccc; padding-left: 15px;">
+    <em>example:</em><br/>
+        <input class="example_button" type="button" onclick="javascript:show_example(key_examples, 'key_example', 0)" value="en-dv-qy" /> 
+        <input class="example_button" type="button" onclick="javascript:show_example(key_examples, 'key_example', 1)" value="sr-cyrl" /> 
+        <input class="example_button" type="button" onclick="javascript:show_example(key_examples, 'key_example', 2)" value="sr-latn" /> 
+    <pre id="key_example"></pre>
+    <script type="text/javascript">show_example(key_examples, 'key_example', 0);</script>
+    <a style="color: #ccc" href="#" onclick="use_example('key', 'key_example'); return false;">use example</a><br/>
+    <br/>
+    Note: You can use vertical line or new line as group delimiter.
+    With Hunspell you will have to use vertical line.
+  </td>
+</tr></table>
+
+
+<!-- footer -->
+<p>&nbsp;</p>
+<p><hr/>
+<small style="color: #888">
+Copyright &copy; Goran Rakic &lt; grakic at devbase dot net &gt; 2009.<br/>
+Released under the terms of the <a style="color: #888"
+href="http://www.gnu.org/licenses/gpl-3.0-standalone.html">GNU
+General Public License</a> version 3 or any later.
+</small></p>
+
+<br/><br/>
+
+</body>
+</html>
