@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+from sets import Set
+
+def loadSet(filename):
+  return Set([x.decode('utf8').rstrip() for x in open(filename).readlines()])
+
+if __name__ == "__main__":
+
+  dictionary = loadSet(sys.argv[1])
+  patch = loadSet(sys.argv[2])
+
+  for line in patch:
+    if not line:
+      continue
+    word = line[1:]
+    if line[0] == '+':
+      dictionary.add(word)
+    elif line[0] == '-':
+      dictionary.discard(word)
+
+  for word in dictionary:
+    print word.encode('utf8')

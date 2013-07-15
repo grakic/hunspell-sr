@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+from patch import loadSet
+
+dictionary = loadSet(sys.argv[1])
+for word in dictionary:
+  if word[0].isupper() and word.lower() in dictionary:
+    print "-%s" % word.lower().encode('utf8')
+

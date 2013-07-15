@@ -1,0 +1,8 @@
+#!/bin/bash
+
+grep -v '^[0-9]' $1 | sort -u > $1.tmp
+COUNT=`wc -l $1.tmp | awk '{ print $1 }'`
+echo $COUNT > $1
+cat $1.tmp >> $1
+rm $1.tmp
+
